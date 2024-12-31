@@ -1,0 +1,308 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define MAX_CARS 100
+#define MAX_MODEL_LENGTH 50
+#define MAX_DATE_LENGTH 20
+#define MAX_FEEDBACK_LENGTH 200
+
+typedef struct {
+    char model[MAX_MODEL_LENGTH];
+    int year;
+    float price;
+    int remaining;
+} Car;
+
+typedef struct {
+    char customerName[50];
+    int age;
+    float totalPrice;
+    bool discountGiven;
+    float discountValue;
+    int numOfCars;
+    char dateOfPurchase[MAX_DATE_LENGTH];
+} Purchase;
+
+typedef struct {
+    char customerName[50];
+    char feedback[MAX_FEEDBACK_LENGTH];
+} Feedback;
+
+Car cars[MAX_CARS];
+int numCars = 0;
+Purchase purchases[MAX_CARS];
+int numPurchases = 0;
+Feedback feedbacks[MAX_CARS];
+int numFeedbacks = 0;
+
+void viewCarsStock();
+void buyCars();
+void viewSalesData();
+void customerFeedback();
+void displayFeedback();
+void addFeedback();
+
+int main() {
+    // Initialize some cars
+    strcpy(cars[numCars].model, "Toyota Camry");
+    cars[numCars].year = 2022;
+    cars[numCars].price = 25000.0;
+    cars[numCars].remaining = 10;
+    numCars++;
+
+    strcpy(cars[numCars].model, "Honda Accord");
+    cars[numCars].year = 2021;
+    cars[numCars].price = 27000.0;
+    cars[numCars].remaining = 8;
+    numCars++;
+
+    strcpy(cars[numCars].model, "Ford Mustang");
+    cars[numCars].year = 2023;
+    cars[numCars].price = 35000.0;
+    cars[numCars].remaining = 5;
+    numCars++;
+
+    strcpy(cars[numCars].model, "Chevrolet Corvette");
+    cars[numCars].year = 2022;
+    cars[numCars].price = 60000.0;
+    cars[numCars].remaining = 3;
+    numCars++;
+
+    // Additional cars
+    strcpy(cars[numCars].model, "BMW 3 Series");
+    cars[numCars].year = 2024;
+    cars[numCars].price = 40000.0;
+    cars[numCars].remaining = 6;
+    numCars++;
+
+    strcpy(cars[numCars].model, "Mercedes-Benz");
+    cars[numCars].year = 2023;
+    cars[numCars].price = 45000.0;
+    cars[numCars].remaining = 4;
+    numCars++;
+
+    // Menu loop
+    int choice;
+    do {
+        printf("\nCar Sales Management System\n");
+        printf("1. View Cars Stock\n");
+        printf("2. Buy Cars\n");
+        printf("3. View Sales Data\n");
+        printf("4. Customer Feedback\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch(choice) {
+            case 1:
+                viewCarsStock();
+                break;
+            case 2:
+                buyCars();
+                break;
+            case 3:
+                viewSalesData();
+                break;
+            case 4:
+                customerFeedback();
+                break;
+            case 5:
+                printf("Exiting program.\n");
+                // Save sales data and feedback to file
+                exit(0);
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 5);
+
+    return 0;
+}
+
+void viewCarsStock() {
+    // Display cars stock (model, year, remaining amount)
+    printf("\nCars Stock:\n");
+    printf("-----------------------------------------------------------------\n");
+    printf("| Model                 | Year   | Price      | Remaining Amount |\n");
+    printf("-----------------------------------------------------------------\n");
+
+    // Display pre-defined cars
+    for (int i = 0; i < numCars; ++i) {
+        printf("| %-20s | %-6d | %-10.2f | %-16d |\n", cars[i].model, cars[i].year, cars[i].price, cars[i].remaining);
+    }
+
+    printf("-----------------------------------------------------------------\n");
+    printf("\nPress Enter to return to the menu...");
+    while (getchar() != '\n'); // Clear input buffer
+    getchar(); // Wait for Enter key
+}
+
+void buyCars() {
+    // Allow user to buy cars, record purchase details and update car arrays
+    char model[MAX_MODEL_LENGTH];
+    int quantity;
+    char name[50];
+    int age;
+    char hasClubCard;
+
+    // Ask for the customer's name
+    printf("\nEnter your name: ");
+    scanf("%s", name);
+
+    // Clear input buffer
+    while (getchar() != '\n');
+
+    // Ask for the model of the car
+    printf("Enter the model of the car you want to buy: ");
+    fgets(model, MAX_MODEL_LENGTH, stdin);
+    model[strcspn(model, "\n")] = '\0'; // Remove trailing newline character
+
+    // Ask for the quantity of cars
+    printf("Enter the quantity you want to buy: ");
+    scanf("%d", &quantity);
+
+    // Ask for the customer's age
+    printf("Enter your age: ");
+    scanf("%d", &age);
+
+    // Ask if the customer has a club card
+    printf("Do you have a club card? (Y/N): ");
+    scanf(" %c", &hasClubCard);
+
+    // Find the car based on the model
+    int carIndex = -1;
+    for (int i = 0; i < numCars; ++i) {
+        if (strcmp(cars[i].model, model) == 0) {
+            carIndex = i;
+            break;
+        }
+    }
+
+    // Check if the car exists and there is enough stock
+    if (carIndex != -1 && cars[carIndex].remaining >= quantity) {
+        // Calculate total price
+        float totalPrice = cars[carIndex].price * quantity;
+
+        // Apply discount if applicable
+        bool discountGiven = false;
+        float discountValue = 0.0;
+        if (age >= 60 || hasClubCard == 'Y' || hasClubCard == 'y') { // Example conditions for discount
+            discountGiven = true;
+            discountValue = totalPrice * 0.05; // Example discount rate (5%)
+            totalPrice -= discountValue;
+        }
+
+        // Record purchase details
+        purchases[numPurchases].totalPrice = totalPrice;
+        strcpy(purchases[numPurchases].customerName, name);
+        purchases[numPurchases].age = age;
+        purchases[numPurchases].discountGiven = discountGiven;
+        purchases[numPurchases].discountValue = discountValue;
+        purchases[numPurchases].numOfCars = quantity;
+        // Get current date and store it in purchases[numPurchases].dateOfPurchase
+
+        // Update car arrays
+        cars[carIndex].remaining -= quantity;
+
+        printf("\nCongratulations, %s! You have successfully bought %d %s.\n", name, quantity, model);
+        printf("Total Price: %.2f\n", totalPrice);
+        if (discountGiven)
+            printf("Discount Applied: %.2f\n", discountValue);
+
+        // Increment the number of purchases
+        numPurchases++;
+
+        // Write sales data to a file
+        FILE *salesFile = fopen("sales_data.txt", "a");
+        if (salesFile != NULL) {
+            fprintf(salesFile, "Customer Name: %s\n", name);
+            fprintf(salesFile, "Car Model: %s\n", model);
+            fprintf(salesFile, "Quantity: %d\n", quantity);
+            fprintf(salesFile, "Total Price: %.2f\n", totalPrice);
+            fprintf(salesFile, "Discount Applied: %s\n", discountGiven ? "Yes" : "No");
+            // Add date of purchase if available
+            fclose(salesFile);
+        } else {
+            printf("Error writing to sales data file.\n");
+        }
+    } else {
+        printf("\nCar not found or insufficient stock.\n");
+    }
+
+    printf("\nPress Enter to return to the menu...");
+    while (getchar() != '\n'); // Clear input buffer
+    getchar(); // Wait for Enter key
+}
+
+void viewSalesData() {
+    // Display sales data
+    printf("\nSales Data:\n");
+    printf("------------------------------------------------------------------------------------------------------------------\n");
+    printf("| %-20s | %-6s | %-20s | %-8s | %-10s | %-10s |\n", "Customer Name", "Age", "Car Model", "Amount", "Total", "Discount");
+    printf("------------------------------------------------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < numPurchases; ++i) {
+        // Find the purchased car model
+        char purchasedModel[MAX_MODEL_LENGTH] = "Unknown";
+        for (int j = 0; j < numCars; ++j) {
+            if (strcmp(purchases[i].customerName, cars[j].model) == 0) {
+                strcpy(purchasedModel, cars[j].model);
+                break;
+            }
+        }
+
+        printf("%s, %d\n", purchases[i].customerName, purchases[i].age);
+        printf("  • Car      : %s\n", purchasedModel);
+        printf("  • Amount   : %d\n", purchases[i].numOfCars);
+        printf("  • Total    : £%.3f\n", purchases[i].totalPrice);
+        printf("  • Discount : %s\n", purchases[i].discountGiven ? "Yes" : "No");
+        printf("  • Date     : %s\n", purchases[i].dateOfPurchase);
+        printf("\n");
+    }
+
+    printf("------------------------------------------------------------------------------------------------------------------\n");
+    printf("\nPress Enter to return to the menu...");
+    while (getchar() != '\n'); // Clear input buffer
+    getchar(); // Wait for Enter key
+}
+
+void customerFeedback() {
+    // Allow customers to leave feedback
+    char feedback[MAX_FEEDBACK_LENGTH];
+    char choice;
+
+    printf("\nCustomer Feedback:\n");
+    printf("We value your feedback. Would you like to leave a feedback for our store? (Y/N): ");
+    scanf(" %c", &choice);
+
+    if (choice == 'Y' || choice == 'y') {
+        printf("Please enter your feedback (max %d characters):\n", MAX_FEEDBACK_LENGTH);
+        getchar(); // Clear input buffer
+        fgets(feedback, MAX_FEEDBACK_LENGTH, stdin);
+        feedback[strcspn(feedback, "\n")] = '\0'; // Remove trailing newline character
+
+        strcpy(feedbacks[numFeedbacks].customerName, feedback);
+        strcpy(feedbacks[numFeedbacks].feedback, feedback);
+        numFeedbacks++;
+
+        printf("\nThank you for your feedback!\n");
+    } else {
+        printf("No problem! If you change your mind, feel free to leave a feedback later.\n");
+    }
+
+    printf("\nPress Enter to return to the menu...");
+    while (getchar() != '\n'); // Clear input buffer
+    getchar(); // Wait for Enter key
+}
+
+void displayFeedback() {
+    printf("\nCustomer Feedback:\n");
+    for (int i = 0; i < numFeedbacks; ++i) {
+        printf("- %s: %s\n", feedbacks[i].customerName, feedbacks[i].feedback);
+    }
+
+    printf("\nPress Enter to return to the menu...");
+    while (getchar() != '\n'); // Clear input buffer
+    getchar(); // Wait for Enter key
+}
